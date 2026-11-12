@@ -1,0 +1,30 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:?SA_PASSWORD tanımlı olmalı (.env.example dosyasına bakın)}
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__Default: "Server=db;Database=AssetPulse;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET tanımlı olmalı (en az 32 karakter)}
+      Seed__AdminPassword: ${ADMIN_PASSWORD:?ADMIN_PASSWORD tanımlı olmalı (en az 10 karakter)}
+      Seed__OperatorPassword: ${OPERATOR_PASSWORD:?OPERATOR_PASSWORD tanımlı olmalı (en az 10 karakter)}
+      Seed__DemoData: ${SEED_DEMO_DATA:-true}
+
+volumes:
+  sqldata:

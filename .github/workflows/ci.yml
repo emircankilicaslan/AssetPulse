@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: Ci-Test-Parola-1!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Ci-Test-Parola-1!' -Q 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - name: Test (birim + SQL Server entegrasyon)
+        env:
+          ASSETPULSE_TEST_SQL: Server=localhost,1433;User Id=sa;Password=Ci-Test-Parola-1!;TrustServerCertificate=True
+        run: dotnet test --no-build -c Release --logger "console;verbosity=normal"
+      - name: Docker imajı derlenir
+        run: docker build -t assetpulse .
