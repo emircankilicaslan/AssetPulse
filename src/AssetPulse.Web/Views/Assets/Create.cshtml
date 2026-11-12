@@ -1,0 +1,56 @@
+@model CreateAssetModel
+@{
+    ViewData["Title"] = "Yeni varlık";
+}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-action="Index">Varlıklar</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Yeni varlık</li>
+</ol></nav>
+<h1 class="h3 mb-4">Yeni varlık</h1>
+
+<div class="row">
+    <div class="col-lg-7">
+        <form class="card ap-card" method="post" asp-action="Create" novalidate>
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label asp-for="Code" class="form-label"></label>
+                        <input asp-for="Code" class="form-control" placeholder="TM-ANK-09" />
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-7">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Ankara TM-9 Güç Transformatörü" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="Category" class="form-label"></label>
+                        <select asp-for="Category" class="form-select">
+                            @foreach (var (value, label) in Display.Categories) { <option value="@value" selected="@(Model.Category == value)">@label</option> }
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label asp-for="Location" class="form-label"></label>
+                        <input asp-for="Location" class="form-control" placeholder="Ankara / Temelli" />
+                        <span asp-validation-for="Location" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+                <a class="btn btn-outline-secondary" asp-action="Index">Vazgeç</a>
+                <button class="btn btn-primary" type="submit">Oluştur</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-5 mt-4 mt-lg-0">
+        <div class="card ap-card"><div class="card-body small text-body-secondary">
+            <p class="fw-semibold text-body mb-2">Sonraki adımlar</p>
+            <ol class="mb-0 ps-3">
+                <li>Varlık oluşturulunca saha cihazı için <strong>API anahtarı</strong> üretilir ve yalnızca bir kez gösterilir.</li>
+                <li>Varlık sayfasından sensörleri ve alarm kurallarını ekleyin.</li>
+                <li>Cihaz, anahtarı <code>X-Api-Key</code> başlığıyla göndererek ölçüm yazar.</li>
+            </ol>
+        </div></div>
+    </div>
+</div>

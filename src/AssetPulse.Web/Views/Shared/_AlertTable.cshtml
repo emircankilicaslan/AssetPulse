@@ -1,0 +1,54 @@
+@model IReadOnlyList<AlertItem>
+@* Alarm tablosu: panelde, varlık sayfasında ve alarm listesinde ortak kullanılır. *@
+@{
+    var now = DateTime.UtcNow;
+    var canAck = ViewData["CanAck"] as bool? ?? true;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="table-responsive">
+    <table class="table table-hover align-middle ap-table mb-0">
+        <thead>
+            <tr>
+                <th>Önem</th><th>Varlık / Sensör</th><th>Değer</th><th>Açılış</th><th>Durum</th>
+                @if (canAck) { <th class="text-end">İşlem</th> }
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td><span class="badge @Display.SeverityBadge(a.Severity)">@Display.SeverityLabel(a.Severity)</span></td>
+                <td>
+                    <a class="fw-semibold text-decoration-none" asp-controller="Assets" asp-action="Details" asp-route-id="@a.AssetId">@a.AssetName</a>
+                    <div class="small text-body-secondary">@a.SensorCode</div>
+                </td>
+                <td>
+                    <span class="fw-semibold">@Display.Number(a.OpenValue) @a.Unit</span>
+                    <div class="small text-body-secondary">eşik @Display.Limit(a.Kind, a.Threshold, a.Unit)</div>
+                </td>
+                <td>
+                    @Display.Local(a.OpenedAt)
+                    <div class="small text-body-secondary">@(a.Status == "Cleared" ? "süre " + Display.Duration(a.OpenedAt, a.ClearedAt) : Display.Ago(a.OpenedAt, now))</div>
+                </td>
+                <td>
+                    <span class="badge @Display.StatusBadge(a.Status)">@Display.StatusLabel(a.Status)</span>
+                    @if (a.AcknowledgedBy is not null)
+                    {
+                        <div class="small text-body-secondary" title="@a.Note">@a.AcknowledgedBy</div>
+                    }
+                </td>
+                @if (canAck)
+                {
+                    <td class="text-end">
+                        @if (a.Status == "Active")
+                        {
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ack-modal"
+                                    data-alert-id="@a.Id" data-alert-title="@a.AssetName · @a.SensorCode" data-return-url="@returnUrl">Üstlen</button>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

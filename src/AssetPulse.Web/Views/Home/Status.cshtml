@@ -1,0 +1,18 @@
+@model int
+@{
+    ViewData["Title"] = "Hata";
+    var (heading, text) = Model switch
+    {
+        404 => ("Sayfa bulunamadı", "Aradığınız kayıt yok ya da kaldırılmış olabilir."),
+        502 => ("API beklenmeyen bir yanıt verdi", "Birkaç saniye sonra tekrar deneyin; sorun sürerse sistem yöneticisine bildirin."),
+        503 => ("Servise ulaşılamıyor", "AssetPulse API şu anda yanıt vermiyor. Birkaç saniye sonra tekrar deneyin."),
+        429 => ("Çok fazla istek", "Kısa bir süre bekleyip tekrar deneyin."),
+        _ => ("Bir hata oluştu", "İşlem tamamlanamadı. Tekrar deneyin."),
+    };
+}
+<div class="text-center py-5">
+    <div class="display-1 text-body-tertiary">@Model</div>
+    <h1 class="h3">@heading</h1>
+    <p class="text-body-secondary">@text</p>
+    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Panele dön</a>
+</div>

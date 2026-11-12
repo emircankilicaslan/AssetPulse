@@ -1,0 +1,59 @@
+@model AssetsIndexModel
+@{
+    ViewData["Title"] = "Varlıklar";
+    var now = DateTime.UtcNow;
+    var tabs = new (string? Key, string Label)[] { (null, "Tümü"), ("Critical", "Kritik"), ("Warning", "Uyarı"), ("NoData", "Veri yok"), ("Normal", "Normal") };
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <h1 class="h3 mb-0">Varlıklar</h1>
+    <input type="search" class="form-control ap-search" id="asset-search" placeholder="Ad, kod veya konum ara…" aria-label="Varlık ara" />
+</div>
+
+<ul class="nav nav-pills ap-pills mb-4">
+    @foreach (var (key, label) in tabs)
+    {
+        var count = Model.Counts.TryGetValue(key ?? "All", out var c) ? c : 0;
+        <li class="nav-item">
+            <a class="nav-link @(Model.Health == key ? "active" : "")" asp-action="Index" asp-route-health="@key">@label <span class="badge rounded-pill ap-pill-count">@count</span></a>
+        </li>
+    }
+</ul>
+
+@if (Model.Assets.Count == 0)
+{
+    <div class="card ap-card"><div class="card-body text-body-secondary">Bu görünümde varlık yok.</div></div>
+}
+else
+{
+    <div class="row g-3" id="asset-grid">
+        @foreach (var a in Model.Assets)
+        {
+            <div class="col-md-6 col-xl-4 asset-item" data-search="@($"{a.Name} {a.Code} {a.Location} {Display.CategoryLabel(a.Category)}".ToLowerInvariant())">
+                <a class="card ap-card ap-asset health-@a.Health.ToLowerInvariant() h-100 text-decoration-none" asp-action="Details" asp-route-id="@a.Id">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="min-w-0">
+                                <div class="fw-semibold text-body text-truncate">@a.Name</div>
+                                <div class="small text-body-secondary">@a.Code</div>
+                            </div>
+                            <span class="badge @Display.HealthBadge(a.Health)">@Display.HealthLabel(a.Health)</span>
+                        </div>
+                        <div class="small text-body-secondary">
+                            <span class="badge text-bg-light border">@Display.CategoryLabel(a.Category)</span>
+                            @if (a.Location is not null) { <span class="ms-1">@a.Location</span> }
+                        </div>
+                        <hr class="my-3" />
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-body-secondary">Son ölçüm</span><span class="text-body">@Display.Ago(a.LastReadingAt, now)</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mt-1">
+                            <span class="text-body-secondary">Açık alarm</span>
+                            <span class="@(a.OpenAlerts > 0 ? "text-danger fw-semibold" : "text-body")">@a.OpenAlerts</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+    <p class="text-body-secondary mt-3 d-none" id="asset-empty">Aramanıza uyan varlık yok.</p>
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="tr" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] is string t ? t + " · " : "")AssetPulse</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <script src="~/js/theme.js"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+@{
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string name) => string.Equals(controller, name, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+@if (signedIn)
+{
+    <nav class="navbar navbar-expand-lg ap-navbar sticky-top">
+        <div class="container-xl">
+            <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                <svg class="ap-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" class="ap-logo-bg" /><path d="M4 17h6l3-8 5 15 3-9h7" class="ap-logo-line" /></svg>
+                <span class="fw-semibold">AssetPulse</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Menü">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                    <li class="nav-item"><a class="nav-link @Active("Home")" asp-controller="Home" asp-action="Index">Panel</a></li>
+                    <li class="nav-item"><a class="nav-link @Active("Assets")" asp-controller="Assets" asp-action="Index">Varlıklar</a></li>
+                    <li class="nav-item"><a class="nav-link @Active("Alerts")" asp-controller="Alerts" asp-action="Index" asp-route-status="open">Alarmlar</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a class="btn btn-sm btn-outline-primary" asp-controller="Assets" asp-action="Create">Yeni varlık</a>
+                    }
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="theme-toggle" title="Açık/koyu tema" aria-label="Temayı değiştir">◐</button>
+                    <span class="ap-user small text-body-secondary d-none d-md-inline">@User.Identity!.Name <span class="badge text-bg-secondary">@(User.IsInRole("Admin") ? "Admin" : "Operatör")</span></span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+}
+<main class="container-xl py-4">
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">@ok<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button></div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">@err<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button></div>
+    }
+    @RenderBody()
+</main>
+<footer class="container-xl pb-4 small text-body-secondary">
+    AssetPulse · Altyapı varlık izleme ve alarm paneli · Saatler Türkiye saatidir (UTC+3)
+</footer>
+<script src="~/lib/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="~/lib/chartjs/chart.umd.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,26 @@
+@model CreatedAsset
+@{
+    ViewData["Title"] = "Varlık oluşturuldu";
+}
+<div class="row justify-content-center"><div class="col-lg-8">
+    <div class="card ap-card">
+        <div class="card-body">
+            <h1 class="h4">✅ @Model.Name oluşturuldu</h1>
+            <p class="text-body-secondary">Kod: <strong>@Model.Code</strong></p>
+            <div class="alert alert-warning" role="alert">
+                <strong>Cihaz API anahtarı yalnızca şimdi gösterilir.</strong> Kopyalayıp güvenli bir yere kaydedin; kaybolursa yenisi üretilmelidir.
+            </div>
+            <label class="form-label" for="api-key">API anahtarı</label>
+            <div class="input-group mb-3">
+                <input class="form-control font-monospace" id="api-key" readonly value="@Model.ApiKey" />
+                <button class="btn btn-outline-secondary" type="button" data-copy="#api-key">Kopyala</button>
+            </div>
+            <label class="form-label">Örnek ölçüm gönderimi</label>
+            <pre class="ap-code mb-4"><code>curl -X POST &lt;API_ADRESI&gt;/api/readings \
+  -H "X-Api-Key: @Model.ApiKey" \
+  -H "Content-Type: application/json" \
+  -d '{"readings":[{"sensor":"oil-temp","measuredAt":"2026-01-01T10:00:00Z","value":71.4}]}'</code></pre>
+            <a class="btn btn-primary" asp-action="Details" asp-route-id="@Model.Id">Varlığa git ve sensör ekle →</a>
+        </div>
+    </div>
+</div></div>

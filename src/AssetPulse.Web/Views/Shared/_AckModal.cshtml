@@ -1,0 +1,22 @@
+@* Alarm üstlenme penceresi; "Üstlen" düğmeleri alarm kimliğini data-* ile bu forma aktarır (js/site.js). *@
+<div class="modal fade" id="ack-modal" tabindex="-1" aria-labelledby="ack-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" asp-controller="Alerts" asp-action="Acknowledge" method="post">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="ack-title">Alarmı üstlen</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3 fw-semibold" id="ack-alert-title"></p>
+                <input type="hidden" name="id" id="ack-id" />
+                <input type="hidden" name="returnUrl" id="ack-return" />
+                <label class="form-label" for="ack-note">Not (isteğe bağlı)</label>
+                <textarea class="form-control" id="ack-note" name="note" rows="3" maxlength="500" placeholder="Örn. Bakım ekibi yönlendirildi."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="submit" class="btn btn-primary">Üstlen</button>
+            </div>
+        </form>
+    </div>
+</div>

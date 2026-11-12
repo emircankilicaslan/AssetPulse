@@ -1,0 +1,99 @@
+/* AssetPulse arayüzü: Bootstrap 5.3 üzerine hafif bir tema. Renkler CSS değişkenleriyle tanımlıdır; koyu tema [data-bs-theme=dark] ile gelir. */
+:root {
+    --ap-brand: #2563eb;
+    --ap-critical: #dc3545;
+    --ap-warning: #f5a524;
+    --ap-nodata: #8a94a6;
+    --ap-normal: #1f9d6a;
+    --ap-radius: .85rem;
+    --ap-bg: #f4f6fa;
+    --ap-card-border: #e3e8f0;
+    --ap-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .06);
+}
+[data-bs-theme="dark"] {
+    --ap-brand: #5b8def;
+    --ap-bg: #0f141b;
+    --ap-card-border: #263041;
+    --ap-shadow: none;
+}
+
+body { background: var(--ap-bg); font-feature-settings: "tnum"; }
+.min-w-0 { min-width: 0; }
+
+/* Üst menü */
+.ap-navbar { background: var(--bs-body-bg); border-bottom: 1px solid var(--ap-card-border); }
+.ap-navbar .nav-link { color: var(--bs-secondary-color); font-weight: 500; border-radius: .5rem; padding: .4rem .8rem; }
+.ap-navbar .nav-link:hover { color: var(--bs-body-color); }
+.ap-navbar .nav-link.active { color: var(--ap-brand); background: color-mix(in srgb, var(--ap-brand) 10%, transparent); }
+.ap-logo { width: 28px; height: 28px; }
+.ap-logo-lg { width: 56px; height: 56px; }
+.ap-logo-bg { fill: var(--ap-brand); }
+.ap-logo-line { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Kartlar */
+.ap-card { border: 1px solid var(--ap-card-border); border-radius: var(--ap-radius); box-shadow: var(--ap-shadow); background: var(--bs-body-bg); }
+.ap-card .card-header { background: transparent; border-bottom: 1px solid var(--ap-card-border); font-weight: 600; padding: .85rem 1.1rem; }
+.ap-card .card-footer { background: transparent; border-top: 1px solid var(--ap-card-border); }
+
+/* Panel göstergeleri */
+.ap-kpi {
+    display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 1rem 1.1rem;
+    background: var(--bs-body-bg); border: 1px solid var(--ap-card-border); border-left-width: 4px; border-radius: var(--ap-radius);
+    box-shadow: var(--ap-shadow); text-decoration: none; color: var(--bs-body-color); transition: transform .12s ease, box-shadow .12s ease;
+}
+.ap-kpi:hover { transform: translateY(-2px); color: var(--bs-body-color); box-shadow: 0 6px 16px rgba(16, 24, 40, .1); }
+.ap-kpi-value { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+.ap-kpi-label { font-size: .82rem; color: var(--bs-secondary-color); }
+.kpi-total { border-left-color: var(--ap-brand); }
+.kpi-critical { border-left-color: var(--ap-critical); }
+.kpi-critical .ap-kpi-value { color: var(--ap-critical); }
+.kpi-warning { border-left-color: var(--ap-warning); }
+.kpi-nodata { border-left-color: var(--ap-nodata); }
+.kpi-normal { border-left-color: var(--ap-normal); }
+.kpi-normal .ap-kpi-value { color: var(--ap-normal); }
+.kpi-alerts { border-left-color: var(--ap-critical); }
+
+.ap-donut { position: relative; width: 190px; height: 190px; }
+
+/* Varlık kartları */
+.ap-asset { border-top: 4px solid var(--ap-card-border); transition: transform .12s ease, box-shadow .12s ease; }
+.ap-asset:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16, 24, 40, .1); }
+.ap-asset.health-critical { border-top-color: var(--ap-critical); }
+.ap-asset.health-warning { border-top-color: var(--ap-warning); }
+.ap-asset.health-nodata { border-top-color: var(--ap-nodata); }
+.ap-asset.health-normal { border-top-color: var(--ap-normal); }
+.ap-search { max-width: 320px; }
+.ap-pills .nav-link { color: var(--bs-secondary-color); font-weight: 500; }
+.ap-pills .nav-link.active { background: var(--ap-brand); color: #fff; }
+.ap-pill-count { background: color-mix(in srgb, currentColor 18%, transparent); color: inherit; font-weight: 600; }
+
+/* Tablolar */
+.ap-table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--bs-secondary-color); font-weight: 600; border-bottom-color: var(--ap-card-border); white-space: nowrap; }
+.ap-table td { border-color: var(--ap-card-border); }
+
+/* Sensör kartı */
+.ap-reading { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.ap-unit { font-size: .9rem; font-weight: 500; color: var(--bs-secondary-color); }
+.ap-chart { position: relative; height: 230px; }
+.rule-chip { font-weight: 500; border: 1px solid transparent; }
+.rule-critical { color: var(--ap-critical); background: color-mix(in srgb, var(--ap-critical) 10%, transparent); border-color: color-mix(in srgb, var(--ap-critical) 35%, transparent); }
+.rule-warning { color: #b7791f; background: color-mix(in srgb, var(--ap-warning) 14%, transparent); border-color: color-mix(in srgb, var(--ap-warning) 40%, transparent); }
+[data-bs-theme="dark"] .rule-warning { color: #f5c26b; }
+.rule-info { color: #0a7ea4; background: color-mix(in srgb, #0dcaf0 12%, transparent); border-color: color-mix(in srgb, #0dcaf0 35%, transparent); }
+
+.ap-code { background: #0d1117; color: #e6edf3; border-radius: .6rem; padding: .9rem 1rem; font-size: .82rem; overflow-x: auto; }
+
+/* Giriş */
+.ap-login { min-height: calc(100vh - 8rem); display: flex; align-items: center; justify-content: center; }
+.ap-login-card { width: 100%; max-width: 430px; border: 1px solid var(--ap-card-border); border-radius: 1.1rem; }
+
+.btn-primary { --bs-btn-bg: var(--ap-brand); --bs-btn-border-color: var(--ap-brand); --bs-btn-hover-bg: #1d4fd0; --bs-btn-hover-border-color: #1d4fd0; --bs-btn-active-bg: #1a45b8; --bs-btn-active-border-color: #1a45b8; }
+.btn-outline-primary { --bs-btn-color: var(--ap-brand); --bs-btn-border-color: var(--ap-brand); --bs-btn-hover-bg: var(--ap-brand); --bs-btn-hover-border-color: var(--ap-brand); }
+a { color: var(--ap-brand); }
+
+@media (max-width: 575.98px) {
+    .text-truncate { white-space: normal; }
+    .list-group-item { flex-wrap: wrap; }
+    .ap-kpi-value { font-size: 1.5rem; }
+    .ap-chart { height: 200px; }
+}

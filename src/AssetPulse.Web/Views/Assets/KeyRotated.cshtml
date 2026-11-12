@@ -1,0 +1,15 @@
+@model string
+@{
+    ViewData["Title"] = "Anahtar yenilendi";
+}
+<div class="row justify-content-center"><div class="col-lg-8">
+    <div class="card ap-card"><div class="card-body">
+        <h1 class="h4">🔑 Cihaz anahtarı yenilendi</h1>
+        <div class="alert alert-warning" role="alert">Eski anahtar geçersiz oldu. Yeni anahtar <strong>yalnızca şimdi</strong> gösterilir.</div>
+        <div class="input-group mb-3">
+            <input class="form-control font-monospace" id="api-key" readonly value="@Model" />
+            <button class="btn btn-outline-secondary" type="button" data-copy="#api-key">Kopyala</button>
+        </div>
+        <a class="btn btn-primary" asp-action="Index">Varlıklara dön</a>
+    </div></div>
+</div></div>

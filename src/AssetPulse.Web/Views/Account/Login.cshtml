@@ -1,0 +1,30 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Giriş";
+}
+<div class="ap-login">
+    <div class="card ap-login-card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <svg class="ap-logo ap-logo-lg" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" class="ap-logo-bg" /><path d="M4 17h6l3-8 5 15 3-9h7" class="ap-logo-line" /></svg>
+                <h1 class="h3 mt-3 mb-1">AssetPulse</h1>
+                <p class="text-body-secondary mb-0">Altyapı varlık izleme ve alarm paneli</p>
+            </div>
+            <form asp-action="Login" method="post" novalidate>
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label"></label>
+                    <input asp-for="Username" class="form-control form-control-lg" autocomplete="username" autofocus />
+                    <span asp-validation-for="Username" class="text-danger small"></span>
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100">Giriş yap</button>
+            </form>
+        </div>
+    </div>
+</div>

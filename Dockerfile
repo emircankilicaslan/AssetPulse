@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY src/AssetPulse.Api/AssetPulse.Api.csproj src/AssetPulse.Api/
 RUN dotnet restore src/AssetPulse.Api/AssetPulse.Api.csproj
-COPY src/ src/
+COPY src/AssetPulse.Api/ src/AssetPulse.Api/
 RUN dotnet publish src/AssetPulse.Api/AssetPulse.Api.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0

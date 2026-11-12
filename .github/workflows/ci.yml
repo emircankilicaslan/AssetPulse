@@ -32,5 +32,7 @@ jobs:
         env:
           ASSETPULSE_TEST_SQL: Server=localhost,1433;User Id=sa;Password=Ci-Test-Parola-1!;TrustServerCertificate=True
         run: dotnet test --no-build -c Release --logger "console;verbosity=normal"
-      - name: Docker imajı derlenir
-        run: docker build -t assetpulse .
+      - name: Docker imajları derlenir (API ve web)
+        run: |
+          docker build -t assetpulse .
+          docker build -t assetpulse-web -f src/AssetPulse.Web/Dockerfile .
