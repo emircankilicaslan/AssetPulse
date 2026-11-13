@@ -1,6 +1,6 @@
 # AssetPulse – Altyapı Varlık İzleme ve Alarm Platformu
 
-![CI](https://github.com/emircankilicaslan/AssetPulse/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/emircankilicaslan/AssetPulse/actions/workflows/ci.yml/badge.svg) ![Lisans: MIT](https://img.shields.io/badge/Lisans-MIT-green.svg)
 
 > **English summary:** A C# / ASP.NET Core 8 platform that collects sensor readings from field assets (transformers, runway lighting regulators, signalling cabinets, pumps, generators), evaluates threshold rules with debouncing and hysteresis, manages the alert lifecycle (active → acknowledged → cleared) and reports asset health. It ships as two apps: a REST API (Dapper + hand-written T-SQL on SQL Server, DbUp migrations, JWT roles, device API keys, idempotent batch ingestion) and a server-rendered ASP.NET Core MVC (Razor) operator panel (Bootstrap 5, Chart.js, dark mode, CSRF protection, strict CSP) that talks to the API only over HTTP. 67 tests (unit, integration against a real SQL Server, and UI tests against a fake API) run in CI.
 
@@ -190,3 +190,7 @@ Arayüze gömülü dosyalar (MIT lisanslı, resmî paketlerden alınmış, sür�
 
 ---
 *Geliştirici: Emircan Kılıçaslan*
+
+## Lisans
+
+Bu proje [MIT Lisansı](LICENSE) ile paylaşılmaktadır.
