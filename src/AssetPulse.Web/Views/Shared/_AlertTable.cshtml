@@ -1,5 +1,6 @@
 @model IReadOnlyList<AlertItem>
-@* Alarm tablosu: panelde, varlık sayfasında ve alarm listesinde ortak kullanılır. *@
+@* Alarm tablosu: panelde, varlık sayfasında ve alarm listesinde ortak kullanılır.
+   Dar ekranlarda (site.css) satırlar, data-label değerlerini etiket olarak kullanan kartlara dönüşür. *@
 @{
     var now = DateTime.UtcNow;
     var canAck = ViewData["CanAck"] as bool? ?? true;
@@ -17,29 +18,37 @@
         @foreach (var a in Model)
         {
             <tr>
-                <td><span class="badge @Display.SeverityBadge(a.Severity)">@Display.SeverityLabel(a.Severity)</span></td>
-                <td>
-                    <a class="fw-semibold text-decoration-none" asp-controller="Assets" asp-action="Details" asp-route-id="@a.AssetId">@a.AssetName</a>
-                    <div class="small text-body-secondary">@a.SensorCode</div>
+                <td data-label="Önem"><div class="ap-cell"><span class="badge @Display.SeverityBadge(a.Severity)">@Display.SeverityLabel(a.Severity)</span></div></td>
+                <td data-label="Varlık / Sensör">
+                    <div class="ap-cell">
+                        <a class="fw-semibold text-decoration-none" asp-controller="Assets" asp-action="Details" asp-route-id="@a.AssetId">@a.AssetName</a>
+                        <div class="small text-body-secondary">@a.SensorCode</div>
+                    </div>
                 </td>
-                <td>
-                    <span class="fw-semibold">@Display.Number(a.OpenValue) @a.Unit</span>
-                    <div class="small text-body-secondary">eşik @Display.Limit(a.Kind, a.Threshold, a.Unit)</div>
+                <td data-label="Değer">
+                    <div class="ap-cell">
+                        <span class="fw-semibold">@Display.Number(a.OpenValue) @a.Unit</span>
+                        <div class="small text-body-secondary">eşik @Display.Limit(a.Kind, a.Threshold, a.Unit)</div>
+                    </div>
                 </td>
-                <td>
-                    @Display.Local(a.OpenedAt)
-                    <div class="small text-body-secondary">@(a.Status == "Cleared" ? "süre " + Display.Duration(a.OpenedAt, a.ClearedAt) : Display.Ago(a.OpenedAt, now))</div>
+                <td data-label="Açılış">
+                    <div class="ap-cell">
+                        @Display.Local(a.OpenedAt)
+                        <div class="small text-body-secondary">@(a.Status == "Cleared" ? "süre " + Display.Duration(a.OpenedAt, a.ClearedAt) : Display.Ago(a.OpenedAt, now))</div>
+                    </div>
                 </td>
-                <td>
-                    <span class="badge @Display.StatusBadge(a.Status)">@Display.StatusLabel(a.Status)</span>
-                    @if (a.AcknowledgedBy is not null)
-                    {
-                        <div class="small text-body-secondary" title="@a.Note">@a.AcknowledgedBy</div>
-                    }
+                <td data-label="Durum">
+                    <div class="ap-cell">
+                        <span class="badge @Display.StatusBadge(a.Status)">@Display.StatusLabel(a.Status)</span>
+                        @if (a.AcknowledgedBy is not null)
+                        {
+                            <div class="small text-body-secondary" title="@a.Note">@a.AcknowledgedBy</div>
+                        }
+                    </div>
                 </td>
                 @if (canAck)
                 {
-                    <td class="text-end">
+                    <td class="text-end ap-actions">
                         @if (a.Status == "Active")
                         {
                             <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ack-modal"
