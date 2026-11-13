@@ -44,6 +44,14 @@ public sealed class AssetStore(Db db)
             "UPDATE dbo.Assets SET ApiKeyHash = @apiKeyHash WHERE Id = @id", new { id, apiKeyHash }, cancellationToken: ct)) == 1;
     }
 
+    /// <summary>Varlığı pasife alır / yeniden etkinleştirir. Pasif varlığın cihaz anahtarı geçersiz olur ve filo listesinden çıkar; geçmiş veri korunur. İdempotenttir.</summary>
+    public async Task<bool> SetActiveAsync(int id, bool isActive, CancellationToken ct)
+    {
+        await using var conn = await db.OpenAsync(ct);
+        return await conn.ExecuteAsync(new CommandDefinition(
+            "UPDATE dbo.Assets SET IsActive = @isActive WHERE Id = @id", new { id, isActive }, cancellationToken: ct)) == 1;
+    }
+
     /// <summary>Aktif varlıklar; son ölçüm zamanı ve açık alarm özeti ile birlikte.</summary>
     public async Task<IReadOnlyList<FleetRow>> FleetAsync(CancellationToken ct)
     {

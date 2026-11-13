@@ -97,6 +97,16 @@ public static class AssetEndpoints
             .RequireAuthorization("AdminOnly")
             .WithSummary("Cihaz anahtarını yeniler; eskisi hemen geçersiz olur (yalnızca Admin).");
 
+        group.MapPost("/{id:int}/deactivate", async (int id, AssetStore assets, CancellationToken ct) =>
+            await assets.SetActiveAsync(id, false, ct) ? Results.NoContent() : Helpers.NotFound("Varlık bulunamadı."))
+            .RequireAuthorization("AdminOnly")
+            .WithSummary("Varlığı pasife alır: cihaz anahtarı geçersiz olur, filo listesinden çıkar; geçmiş veri korunur (yalnızca Admin).");
+
+        group.MapPost("/{id:int}/activate", async (int id, AssetStore assets, CancellationToken ct) =>
+            await assets.SetActiveAsync(id, true, ct) ? Results.NoContent() : Helpers.NotFound("Varlık bulunamadı."))
+            .RequireAuthorization("AdminOnly")
+            .WithSummary("Pasife alınmış varlığı yeniden etkinleştirir (yalnızca Admin).");
+
         group.MapPost("/{id:int}/sensors", async (int id, CreateSensorRequest req, AssetStore assets, CancellationToken ct) =>
             {
                 if (req.Code is null || !Helpers.CodePattern().IsMatch(req.Code))
