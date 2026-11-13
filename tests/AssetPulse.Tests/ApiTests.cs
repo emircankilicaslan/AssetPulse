@@ -169,6 +169,41 @@ public class ApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [SqlFact]
+    public async Task Pasife_alinan_varlik_olcum_kabul_etmez_filodan_cikar_ve_yeniden_etkinlesir()
+    {
+        var (assetId, key, _) = await CreateAssetWithRuleAsync(threshold: 1000);
+        var payload = new { readings = new[] { Reading("temp", DateTime.UtcNow.AddMinutes(-1), 1) } };
+        Assert.Equal(HttpStatusCode.OK, (await api.Device(key).PostAsJsonAsync("/api/readings", payload)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await api.Admin.PostAsync($"/api/assets/{assetId}/deactivate", null)).StatusCode);
+        // İdempotent: zaten pasif olanı tekrar pasife almak hata değil.
+        Assert.Equal(HttpStatusCode.NoContent, (await api.Admin.PostAsync($"/api/assets/{assetId}/deactivate", null)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await api.Device(key).PostAsJsonAsync("/api/readings", payload)).StatusCode);
+        var fleet = await Body(await api.Operator.GetAsync("/api/assets"));
+        Assert.DoesNotContain(fleet.EnumerateArray(), a => a.GetProperty("id").GetInt32() == assetId);
+        // Geçmiş korunur: detay hala okunabilir ve pasif görünür.
+        var detail = await Body(await api.Operator.GetAsync($"/api/assets/{assetId}"));
+        Assert.False(detail.GetProperty("isActive").GetBoolean());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await api.Admin.PostAsync($"/api/assets/{assetId}/activate", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await api.Device(key).PostAsJsonAsync("/api/readings", payload)).StatusCode);
+        var fleetAgain = await Body(await api.Operator.GetAsync("/api/assets"));
+        Assert.Contains(fleetAgain.EnumerateArray(), a => a.GetProperty("id").GetInt32() == assetId);
+    }
+
+    [SqlFact]
+    public async Task Operator_pasife_alamaz_olmayan_varlik_404_doner()
+    {
+        var (assetId, _, _) = await CreateAssetWithRuleAsync();
+        Assert.Equal(HttpStatusCode.Forbidden, (await api.Operator.PostAsync($"/api/assets/{assetId}/deactivate", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await api.Operator.PostAsync($"/api/assets/{assetId}/activate", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await api.Anonymous.PostAsync($"/api/assets/{assetId}/deactivate", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await api.Admin.PostAsync("/api/assets/999999/deactivate", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await api.Admin.PostAsync("/api/assets/999999/activate", null)).StatusCode);
+    }
+
+    [SqlFact]
     public async Task Gec_gelen_eski_olcum_alarm_degerlendirmesine_girmez()
     {
         var (assetId, key, _) = await CreateAssetWithRuleAsync(consecutive: 1);
