@@ -2,6 +2,7 @@ using AssetPulse.Api.Data;
 using AssetPulse.Api.Security;
 using AssetPulse.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace AssetPulse.Api.Endpoints;
 
@@ -39,7 +40,7 @@ public static class ReadingEndpoints
 
         app.MapGet("/api/assets/{id:int}/sensors/{code}/series", async (
                 int id, string code, DateTime? from, DateTime? to, Bucket? bucket,
-                AssetStore assets, SeriesStore series, TimeProvider clock, CancellationToken ct) =>
+                AssetStore assets, SeriesStore series, TimeProvider clock, IOptions<PulseOptions> options, CancellationToken ct) =>
             {
                 var end = (to ?? clock.GetUtcNow().UtcDateTime).ToUniversalTime();
                 var start = (from ?? end.AddHours(-24)).ToUniversalTime();
@@ -51,7 +52,9 @@ public static class ReadingEndpoints
 
                 var sensorId = await assets.FindSensorIdAsync(id, code, ct);
                 if (sensorId is null) return Helpers.NotFound("Sensör bulunamadı.");
-                var points = await series.QueryAsync(sensorId.Value, start, end, kind, ct);
+                var points = await series.QueryAsync(sensorId.Value, start, end, kind, options.Value.MaxRawSeriesPoints + 1, ct);
+                    if (kind == Bucket.Raw && points.Count > options.Value.MaxRawSeriesPoints)
+                        return Helpers.Invalid("to", $"Ham veri en fazla {options.Value.MaxRawSeriesPoints} nokta döndürür; aralığı daraltın veya saatlik/günlük kovayı kullanın.");
                 return Results.Ok(new { sensor = code, from = start, to = end, bucket = kind, points });
             })
             .RequireAuthorization()
