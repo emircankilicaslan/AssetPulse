@@ -11,6 +11,9 @@ public sealed class PulseOptions
 {
     /// <summary>Bu süre boyunca ölçüm gelmeyen varlık "Veri yok" sayılır.</summary>
     public int StaleAfterMinutes { get; set; } = 30;
+
+    /// <summary>Ham (Raw) zaman serisi yanıtında dönecek en fazla nokta sayısı; aşılırsa istek 400 ile reddedilir.</summary>
+    public int MaxRawSeriesPoints { get; set; } = 20_000;
 }
 
 public sealed record CreateAssetRequest(string? Code, string? Name, AssetCategory Category, string? Location);
