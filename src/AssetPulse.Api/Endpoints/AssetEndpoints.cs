@@ -14,6 +14,15 @@ public sealed class PulseOptions
 
     /// <summary>Ham (Raw) zaman serisi yanıtında dönecek en fazla nokta sayısı; aşılırsa istek 400 ile reddedilir.</summary>
     public int MaxRawSeriesPoints { get; set; } = 20_000;
+
+    /// <summary>
+    /// Ölçümlerin saklanacağı gün sayısı; daha eskileri düzenli olarak silinir (her sensörün son ölçümü hariç).
+    /// 0 (varsayılan) saklama sınırı olmadığı, hiçbir ölçümün silinmeyeceği anlamına gelir.
+    /// </summary>
+    public int RetentionDays { get; set; } = 0;
+
+    /// <summary>Saklama temizliğinin kaç dakikada bir çalışacağı.</summary>
+    public int RetentionIntervalMinutes { get; set; } = 360;
 }
 
 public sealed record CreateAssetRequest(string? Code, string? Name, AssetCategory Category, string? Location);

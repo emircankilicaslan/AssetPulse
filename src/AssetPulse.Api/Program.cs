@@ -38,6 +38,8 @@ builder.Services.AddScoped<AssetStore>();
 builder.Services.AddScoped<AlertStore>();
 builder.Services.AddScoped<SeriesStore>();
 builder.Services.AddScoped<UserStore>();
+builder.Services.AddSingleton<ReadingRetentionStore>();
+builder.Services.AddHostedService<ReadingRetentionService>();
 builder.Services.AddScoped<IngestionService>();
 
 builder.Services

@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/emircankilicaslan/AssetPulse/actions/workflows/ci.yml/badge.svg) ![Lisans: MIT](https://img.shields.io/badge/Lisans-MIT-green.svg)
 
-> **English summary:** A C# / ASP.NET Core 8 platform that collects sensor readings from field assets (transformers, runway lighting regulators, signalling cabinets, pumps, generators), evaluates threshold rules with debouncing and hysteresis, manages the alert lifecycle (active → acknowledged → cleared) and reports asset health. It ships as two apps: a REST API (Dapper + hand-written T-SQL on SQL Server, DbUp migrations, JWT roles, device API keys, idempotent batch ingestion) and a server-rendered ASP.NET Core MVC (Razor) operator panel (Bootstrap 5, Chart.js, dark mode, CSRF protection, strict CSP) that talks to the API only over HTTP. 67 tests (unit, integration against a real SQL Server, and UI tests against a fake API) run in CI.
+> **English summary:** A C# / ASP.NET Core 8 platform that collects sensor readings from field assets (transformers, runway lighting regulators, signalling cabinets, pumps, generators), evaluates threshold rules with debouncing and hysteresis, manages the alert lifecycle (active → acknowledged → cleared) and reports asset health. It ships as two apps: a REST API (Dapper + hand-written T-SQL on SQL Server, DbUp migrations, JWT roles, device API keys, idempotent batch ingestion) and a server-rendered ASP.NET Core MVC (Razor) operator panel (Bootstrap 5, Chart.js, dark mode, CSRF protection, strict CSP) that talks to the API only over HTTP. 79 tests (unit, integration against a real SQL Server, and UI tests against a fake API) run in CI.
 
 Trafo merkezi, pist ışıklandırma regülatörü, sinyal panosu, pompa istasyonu ve jeneratör gibi saha varlıklarından gelen sensör ölçümlerini toplar; eşik kurallarına göre alarm üretir, alarmın yaşam döngüsünü (aktif → üstlenildi → kapandı) yönetir ve her varlığın sağlık durumunu operatör panelinde gösterir.
 
@@ -155,7 +155,7 @@ Yapılandırma ortam değişkenleriyle yapılır.
 
 | Uygulama | Değişkenler |
 |---|---|
-| API | `ConnectionStrings__Default`, `Jwt__Secret` (en az 32 karakter), `Seed__AdminPassword`, `Seed__OperatorPassword`, `Seed__DemoData`, `AssetPulse__StaleAfterMinutes` (varsayılan 30), `Swagger__Enabled`, `Database__MigrateOnStartup` |
+| API | `ConnectionStrings__Default`, `Jwt__Secret` (en az 32 karakter), `Seed__AdminPassword`, `Seed__OperatorPassword`, `Seed__DemoData`, `AssetPulse__StaleAfterMinutes` (varsayılan 30), `AssetPulse__RetentionDays` (varsayılan 0 = ölçümler silinmez), `AssetPulse__RetentionIntervalMinutes` (varsayılan 360), `Swagger__Enabled`, `Database__MigrateOnStartup` |
 | Web | `Api__BaseUrl` (zorunlu), `Display__UtcOffsetHours` (varsayılan 3), `Auth__SecureCookie` (HTTPS arkasında `true`) |
 
 Gizli değerler repoda tutulmaz; eksikse API başlamaz.
@@ -166,10 +166,10 @@ Gizli değerler repoda tutulmaz; eksikse API başlamaz.
 dotnet test      # SQL Server testleri için ASSETPULSE_TEST_SQL tanımlı olmalı; yoksa onlar atlanır
 ```
 
-67 test:
+79 test:
 
-- **Alarm motoru ve API (37):** eşik sınırları, art arda sayı, histerezis, sağlık önceliği, API anahtarı, CSV kaçışı ve gerçek SQL Server'a karşı uçtan uca senaryolar (yetkilendirme, çift kayıt, geçersiz/geç/gelecek ölçüm, milisaniye hassasiyeti, alarm yaşam döngüsü, üstlenme çakışması, saatlik özet, anahtar yenileme, CSV). Entegrasyon testleri her çalıştırmada kendi geçici veritabanını oluşturur ve siler.
-- **Arayüz (30):** gerçek HTTP hattı (çerez, antiforgery, yetki filtreleri) üzerinde, API'nin yerine konan sahte bir sunucuyla: girişsiz erişim, yanlış parola, açık yönlendirme (open redirect) engeli, token'ın API'ye iletilmesi, süresi dolan oturum, API'ye ulaşılamaması (503 sayfası), rol kısıtı, API anahtarının yalnızca bir kez gösterilmesi, alarm üstlenme, güvenlik başlıkları ve Türkçe biçimlendirme yardımcıları.
+- **Alarm motoru ve API (48):** eşik sınırları, art arda sayı, histerezis, sağlık önceliği, API anahtarı, CSV kaçışı ve gerçek SQL Server'a karşı uçtan uca senaryolar (yetkilendirme, çift kayıt, geçersiz/geç/gelecek ölçüm, milisaniye hassasiyeti, alarm yaşam döngüsü, üstlenme çakışması, saatlik özet, anahtar yenileme, CSV). Ölçüm saklama süresi testleri (eski ölçümlerin silinmesi, her sensörün son ölçümünün korunması, parça parça silme) gerçek SQL Server'a karşı çalışır. Entegrasyon testleri her çalıştırmada kendi geçici veritabanını oluşturur ve siler.
+- **Arayüz (31):** gerçek HTTP hattı (çerez, antiforgery, yetki filtreleri) üzerinde, API'nin yerine konan sahte bir sunucuyla: girişsiz erişim, yanlış parola, açık yönlendirme (open redirect) engeli, token'ın API'ye iletilmesi, süresi dolan oturum, API'ye ulaşılamaması (503 sayfası), rol kısıtı, API anahtarının yalnızca bir kez gösterilmesi, alarm üstlenme, güvenlik başlıkları ve Türkçe biçimlendirme yardımcıları.
 
 GitHub Actions bir SQL Server servisiyle tüm testleri çalıştırır ve iki Docker imajının da derlendiğini doğrular.
 
@@ -181,7 +181,7 @@ GitHub Actions bir SQL Server servisiyle tüm testleri çalıştırır ve iki Do
 - CSV çıktısında hücreler formül enjeksiyonuna karşı kaçışlanır; SQL parametreliyken kova ifadeleri sabit bir listeden seçilir.
 - Docker Compose örneği kolaylık için `sa` hesabını kullanır ve HTTP üzerinde çalışır; üretimde ayrı bir veritabanı hesabı, HTTPS ve `Auth__SecureCookie=true` kullanılmalıdır. Çerez şifreleme anahtarları kalıcı değildir: panel yeniden başlayınca oturumlar kapanır.
 - Hız sınırlayıcılar bellektedir (tek örnek); ters vekil arkasında istemci IP'si için `ForwardedHeaders` ayarlanmalıdır.
-- Bildirim (e-posta/SMS), ölçüm saklama süresi (retention) ve token yenileme yoktur; tek örnek olarak çalışacak biçimde tasarlanmıştır.
+- Ölçüm saklama süresi isteğe bağlıdır ve varsayılan olarak kapalıdır: `AssetPulse__RetentionDays` verilirse bu günden eski ölçümler arka planda parça parça silinir, her sensörün **son ölçümü** ise yaşı ne olursa olsun korunur (cihaz susmuşsa son değeri ve zamanı panelde görünmeye devam eder). Silinen ölçümler geri getirilemez; saatlik/günlük özetler de eski ölçümlerden hesaplandığı için o aralıklar için boş döner. Bildirim (e-posta/SMS) ve token yenileme yoktur; tek örnek olarak çalışacak biçimde tasarlanmıştır.
 - Ölçümler tek işlemde satır satır yazılır (istek başına en fazla 1000); çok yüksek hacimde toplu yazma (`SqlBulkCopy`/tablo tipli parametre) sonraki adımdır.
 
 ## Üçüncü taraf bileşenler
