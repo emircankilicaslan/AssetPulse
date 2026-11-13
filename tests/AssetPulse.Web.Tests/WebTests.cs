@@ -133,6 +133,42 @@ public sealed class WebTests : IDisposable
     }
 
     [Fact]
+    public async Task Grafik_ham_veri_API_sinirini_asarsa_saatlik_ozete_duser()
+    {
+        var calls = 0;
+        _web.Api.Routes["GET api/assets/1/sensors/oil-temp/series"] = () =>
+        {
+            if (++calls == 1)
+                return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent("{\"title\":\"Geçersiz istek\",\"detail\":\"Ham veri en fazla 20000 nokta döndürür.\"}", System.Text.Encoding.UTF8, "application/json"),
+                };
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    sensor = "oil-temp", from = DateTime.UtcNow.AddDays(-1), to = DateTime.UtcNow, bucket = "Hour",
+                    points = new[] { new { time = DateTime.UtcNow.AddHours(-1), min = 60m, avg = 61.5m, max = 63m, count = 120 } },
+                }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)), System.Text.Encoding.UTF8, "application/json"),
+            };
+        };
+        await LoginAsync();
+
+        var req = new HttpRequestMessage(HttpMethod.Get, "/Assets/1/Series?code=oil-temp&range=24h");
+        req.Headers.Add("X-Requested-With", "fetch");
+        var res = await _client.SendAsync(req);
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var json = await res.Content.ReadAsStringAsync();
+        Assert.Contains("\"bucket\":\"Hour\"", json);
+        Assert.Contains("\"count\":120", json);
+        var seriesCalls = _web.Api.Calls.Where(c => c.Path == "api/assets/1/sensors/oil-temp/series").ToList();
+        Assert.Equal(2, seriesCalls.Count);
+        Assert.Contains("bucket=Raw", seriesCalls[0].Query);
+        Assert.Contains("bucket=Hour", seriesCalls[1].Query);
+    }
+
+    [Fact]
     public async Task Admin_varlik_olusturur_ve_API_anahtari_bir_kez_gosterilir()
     {
         _web.Api.Json("POST api/auth/login", Sample.Login("Admin", "admin"));

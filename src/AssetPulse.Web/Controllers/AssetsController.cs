@@ -76,7 +76,17 @@ public sealed class AssetsController(ApiClient api, TimeProvider clock) : Contro
             _ => (TimeSpan.FromHours(24), "Raw"),
         };
         var to = clock.GetUtcNow().UtcDateTime;
-        var data = await api.SeriesAsync(id, code, to - span, to, bucket, ct);
+        SeriesResult data;
+        try
+        {
+            data = await api.SeriesAsync(id, code, to - span, to, bucket, ct);
+        }
+        catch (ApiException ex) when (bucket == "Raw" && ex.Status == System.Net.HttpStatusCode.BadRequest)
+        {
+            // Çok sık ölçüm yapan sensörde ham veri API sınırını aşar (400): saatlik özete düşülür.
+            bucket = "Hour";
+            data = await api.SeriesAsync(id, code, to - span, to, bucket, ct);
+        }
         return Json(new
         {
             bucket,
