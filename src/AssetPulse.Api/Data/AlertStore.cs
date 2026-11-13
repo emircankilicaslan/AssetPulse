@@ -1,9 +1,10 @@
 using AssetPulse.Api.Domain;
 using Dapper;
+using System.Data;
 
 namespace AssetPulse.Api.Data;
 
-public sealed record AlertFilter(AlertStatus? Status, bool OnlyOpen, Severity? Severity, int? AssetId);
+public sealed record AlertFilter(AlertStatus? Status, bool OnlyOpen, Severity? Severity, int? AssetId, DateTime? From = null, DateTime? To = null);
 
 public sealed record AlertPage(IReadOnlyList<AlertRow> Items, int Total, int Page, int PageSize);
 
@@ -30,6 +31,8 @@ public sealed class AlertStore(Db db)
         else if (f.OnlyOpen) conditions.Add("al.Status IN (0, 1)");
         if (f.Severity is { } sev) { conditions.Add("al.Severity = @severity"); args.Add("severity", (byte)sev); }
         if (f.AssetId is { } assetId) { conditions.Add("al.AssetId = @assetId"); args.Add("assetId", assetId); }
+        if (f.From is { } fromUtc) { conditions.Add("al.OpenedAt >= @fromUtc"); args.Add("fromUtc", fromUtc, DbType.DateTime2); }
+        if (f.To is { } toUtc) { conditions.Add("al.OpenedAt < @toUtc"); args.Add("toUtc", toUtc, DbType.DateTime2); }
         return (conditions.Count == 0 ? "" : "WHERE " + string.Join(" AND ", conditions), args);
     }
 

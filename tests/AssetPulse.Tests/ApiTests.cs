@@ -262,6 +262,35 @@ public class ApiTests(ApiFixture api) : IClassFixture<ApiFixture>
     }
 
     [SqlFact]
+    public async Task Alarm_listesi_ve_csv_tarih_araligina_gore_suzulur_ters_aralik_400_doner()
+    {
+        var (assetId, key, _) = await CreateAssetWithRuleAsync(consecutive: 1);
+        await api.Device(key).PostAsJsonAsync("/api/readings", new { readings = new[] { Reading("temp", DateTime.UtcNow.AddMinutes(-1), 95) } });
+
+        var past = Uri.EscapeDataString(Iso(DateTime.UtcNow.AddHours(-1)));
+        var future = Uri.EscapeDataString(Iso(DateTime.UtcNow.AddHours(1)));
+        var far = Uri.EscapeDataString(Iso(DateTime.UtcNow.AddHours(2)));
+
+        var inRange = await Body(await api.Operator.GetAsync($"/api/alerts?assetId={assetId}&from={past}&to={future}"));
+        Assert.Equal(1, inRange.GetProperty("total").GetInt32());
+
+        var tooLate = await Body(await api.Operator.GetAsync($"/api/alerts?assetId={assetId}&from={future}"));
+        Assert.Equal(0, tooLate.GetProperty("total").GetInt32());
+
+        var tooEarly = await Body(await api.Operator.GetAsync($"/api/alerts?assetId={assetId}&to={past}"));
+        Assert.Equal(0, tooEarly.GetProperty("total").GetInt32());
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await api.Operator.GetAsync($"/api/alerts?from={far}&to={past}")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await api.Operator.GetAsync($"/api/alerts/export.csv?from={far}&to={past}")).StatusCode);
+
+        var csvIn = await api.Operator.GetAsync($"/api/alerts/export.csv?assetId={assetId}&from={past}&to={future}");
+        Assert.Equal(HttpStatusCode.OK, csvIn.StatusCode);
+        Assert.Contains("Test Trafosu", await csvIn.Content.ReadAsStringAsync());
+        var csvOut = await api.Operator.GetAsync($"/api/alerts/export.csv?assetId={assetId}&from={future}");
+        Assert.DoesNotContain("Test Trafosu", await csvOut.Content.ReadAsStringAsync());
+    }
+
+    [SqlFact]
     public async Task Milisaniye_hassasiyeti_korunur_ve_tekrar_gonderim_yok_sayilir()
     {
         // Zaman damgası datetime'a (3,33 ms'ye yuvarlayan tür) dönüşürse bu test kırılır.

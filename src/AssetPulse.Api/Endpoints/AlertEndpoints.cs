@@ -17,13 +17,14 @@ public static class AlertEndpoints
         var group = app.MapGroup("/api/alerts").RequireAuthorization().WithTags("Alarmlar");
 
         group.MapGet("/", async (AlertStatus? status, bool? open, Severity? severity, int? assetId, int? page, int? pageSize,
-                AlertStore alerts, CancellationToken ct) =>
+                DateTime? from, DateTime? to, AlertStore alerts, CancellationToken ct) =>
             {
                 var p = page ?? 1;
                 var size = pageSize ?? 25;
                 if (p < 1) return Helpers.Invalid("page", "Sayfa 1 veya daha büyük olmalıdır.");
                 if (size is < 1 or > 100) return Helpers.Invalid("pageSize", "Sayfa boyutu 1-100 olmalıdır.");
-                var result = await alerts.ListAsync(new AlertFilter(status, open ?? false, severity, assetId), p, size, ct);
+                if (from is not null && to is not null && from >= to) return Helpers.Invalid("from", "'from' değeri 'to' değerinden önce olmalıdır.");
+                var result = await alerts.ListAsync(new AlertFilter(status, open ?? false, severity, assetId, from?.ToUniversalTime(), to?.ToUniversalTime()), p, size, ct);
                 return Results.Ok(result);
             })
             .WithSummary("Alarmları süzer ve sayfalar (?status, ?open=true, ?severity, ?assetId). En yeni önce.");
@@ -47,9 +48,10 @@ public static class AlertEndpoints
             .WithSummary("Aktif alarmı üstlenir (kim ve ne zaman kaydedilir).");
 
         group.MapGet("/export.csv", async (AlertStatus? status, bool? open, Severity? severity, int? assetId,
-                AlertStore alerts, CancellationToken ct) =>
+                DateTime? from, DateTime? to, AlertStore alerts, CancellationToken ct) =>
             {
-                var page = await alerts.ListAsync(new AlertFilter(status, open ?? false, severity, assetId), 1, MaxExportRows, ct);
+                if (from is not null && to is not null && from >= to) return Helpers.Invalid("from", "'from' değeri 'to' değerinden önce olmalıdır.");
+                var page = await alerts.ListAsync(new AlertFilter(status, open ?? false, severity, assetId, from?.ToUniversalTime(), to?.ToUniversalTime()), 1, MaxExportRows, ct);
                 var sb = new StringBuilder("Id,Varlık,Sensör,Önem,Durum,Açılış (UTC),Tetikleyen değer,Birim,Eşik,Üstlenen,Kapanış (UTC)\n");
                 foreach (var a in page.Items)
                 {
