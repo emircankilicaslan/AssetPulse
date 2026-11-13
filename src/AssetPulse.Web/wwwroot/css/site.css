@@ -97,3 +97,16 @@ a { color: var(--ap-brand); }
     .ap-kpi-value { font-size: 1.5rem; }
     .ap-chart { height: 200px; }
 }
+
+/* Dar ekranda alarm tablosu: her satır, etiketli alanlardan oluşan bir kart olur (yatay kaydırma gerekmez). */
+@media (max-width: 767.98px) {
+  .ap-table thead { display: none; }
+  .ap-table, .ap-table tbody, .ap-table tr, .ap-table td { display: block; width: 100%; }
+  .ap-table tr { padding: .75rem 1rem; border-bottom: 1px solid var(--ap-card-border); }
+  .ap-table tbody tr:last-child { border-bottom: 0; }
+  .ap-table td { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: .75rem; align-items: start; padding: .3rem 0; border: 0; text-align: left; }
+  .ap-table td::before { content: attr(data-label); color: var(--bs-secondary-color); font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding-top: .2rem; }
+  .ap-table td.ap-actions { display: block; text-align: right; padding-top: .5rem; }
+  .ap-table td.ap-actions::before { content: none; }
+  .ap-table td.ap-actions:empty { display: none; }
+}
