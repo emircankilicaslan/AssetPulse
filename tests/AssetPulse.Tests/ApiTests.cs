@@ -286,4 +286,38 @@ public class ApiTests(ApiFixture api) : IClassFixture<ApiFixture>
         Assert.Equal(HttpStatusCode.BadRequest, (await api.Operator.GetAsync("/api/alerts?pageSize=1000")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await api.Operator.GetAsync("/api/alerts?page=0")).StatusCode);
     }
+
+    [SqlFact]
+    public async Task Ham_seri_nokta_sinirini_asarsa_400_doner_saatlik_ozet_etkilenmez()
+    {
+        // Test ortamında sınır 50 nokta (ApiFixture). 51 ham ölçüm: sınırın bir fazlası.
+        var (assetId, key, _) = await CreateAssetWithRuleAsync(threshold: 1000);
+        var start = DateTime.UtcNow.AddMinutes(-90);
+        var readings = Enumerable.Range(0, 51).Select(i => Reading("temp", start.AddSeconds(i), i)).ToArray();
+        var ingest = await Body(await api.Device(key).PostAsJsonAsync("/api/readings", new { readings }));
+        Assert.Equal(51, ingest.GetProperty("accepted").GetInt32());
+
+        var from = Uri.EscapeDataString(Iso(start.AddMinutes(-1)));
+        var to = Uri.EscapeDataString(Iso(start.AddMinutes(5)));
+        var raw = await api.Operator.GetAsync($"/api/assets/{assetId}/sensors/temp/series?from={from}&to={to}&bucket=Raw");
+        Assert.Equal(HttpStatusCode.BadRequest, raw.StatusCode);
+
+        var hourly = await Body(await api.Operator.GetAsync($"/api/assets/{assetId}/sensors/temp/series?from={from}&to={to}&bucket=Hour"));
+        Assert.True(hourly.GetProperty("points").GetArrayLength() >= 1);
+    }
+
+    [SqlFact]
+    public async Task Ham_seri_nokta_sayisi_sinira_esitse_kabul_edilir()
+    {
+        var (assetId, key, _) = await CreateAssetWithRuleAsync(threshold: 1000);
+        var start = DateTime.UtcNow.AddMinutes(-90);
+        var readings = Enumerable.Range(0, 50).Select(i => Reading("temp", start.AddSeconds(i), i)).ToArray();
+        var ingest = await Body(await api.Device(key).PostAsJsonAsync("/api/readings", new { readings }));
+        Assert.Equal(50, ingest.GetProperty("accepted").GetInt32());
+
+        var from = Uri.EscapeDataString(Iso(start.AddMinutes(-1)));
+        var to = Uri.EscapeDataString(Iso(start.AddMinutes(5)));
+        var raw = await Body(await api.Operator.GetAsync($"/api/assets/{assetId}/sensors/temp/series?from={from}&to={to}&bucket=Raw"));
+        Assert.Equal(50, raw.GetProperty("points").GetArrayLength());
+    }
 }

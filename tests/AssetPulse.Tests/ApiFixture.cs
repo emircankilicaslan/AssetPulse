@@ -48,6 +48,7 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Seed__AdminPassword", AdminPassword);
         Environment.SetEnvironmentVariable("Seed__OperatorPassword", OperatorPassword);
         Environment.SetEnvironmentVariable("Seed__DemoData", "false");
+        Environment.SetEnvironmentVariable("AssetPulse__MaxRawSeriesPoints", "50"); // ham seri sınırı testi için küçük tutulur
 
         // Sunucu günlükleri bellekte toplanır; beklenmeyen bir yanıtta hata mesajına eklenir.
         Console.SetOut(TextWriter.Synchronized(ServerLog));
