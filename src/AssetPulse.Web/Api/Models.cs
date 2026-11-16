@@ -31,6 +31,15 @@ public sealed record AlertPage(List<AlertItem> Items, int Total, int Page, int P
     public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));
 }
 
+public sealed record AuditEntry(
+    long Id, DateTime OccurredAt, string Actor, string? ActorRole, string Action,
+    string? EntityType, string? EntityId, string? Details);
+
+public sealed record AuditPage(List<AuditEntry> Items, int Total, int Page, int PageSize)
+{
+    public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));
+}
+
 public sealed record AssetTotals(int Total, Dictionary<string, int> ByHealth);
 
 public sealed record Dashboard(

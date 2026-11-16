@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using AssetPulse.Api.Data;
 using AssetPulse.Api.Domain;
+using AssetPulse.Api.Services;
 using Microsoft.Extensions.Options;
 
 namespace AssetPulse.Api.Endpoints;
@@ -33,11 +34,12 @@ public static class AlertEndpoints
                 await alerts.GetAsync(id, ct) is { } alert ? Results.Ok(alert) : Helpers.NotFound("Alarm bulunamadı."))
             .WithSummary("Tek bir alarmı getirir.");
 
-        group.MapPost("/{id:long}/ack", async (long id, AckRequest? req, HttpContext http, AlertStore alerts, TimeProvider clock, CancellationToken ct) =>
+        group.MapPost("/{id:long}/ack", async (long id, AckRequest? req, HttpContext http, AlertStore alerts, AuditLog audit, TimeProvider clock, CancellationToken ct) =>
             {
                 if (req?.Note is { Length: > 500 }) return Helpers.Invalid("note", "Not en fazla 500 karakter olabilir.");
                 var user = http.User.FindFirst("name")?.Value ?? "bilinmiyor";
                 var outcome = await alerts.AcknowledgeAsync(id, user, req?.Note?.Trim(), clock.GetUtcNow().UtcDateTime, ct);
+                if (outcome == AckOutcome.Done) await audit.RecordAsync(http, "AlertAcknowledged", "Alert", id, req?.Note?.Trim());
                 return outcome switch
                 {
                     AckOutcome.Done => Results.Ok(await alerts.GetAsync(id, ct)),
@@ -67,6 +69,19 @@ public static class AlertEndpoints
                 return Results.File(bytes, "text/csv; charset=utf-8", "alarmlar.csv");
             })
             .WithSummary($"Alarmları CSV olarak indirir (en fazla {MaxExportRows} satır; hücreler formül enjeksiyonuna karşı korunur).");
+
+        group.MapGet("/export.xlsx", async (AlertStatus? status, bool? open, Severity? severity, int? assetId,
+                DateTime? from, DateTime? to, AlertStore alerts, CancellationToken ct) =>
+            {
+                if (from is not null && to is not null && from >= to) return Helpers.Invalid("from", "'from' değeri 'to' değerinden önce olmalıdır.");
+                var page = await alerts.ListAsync(new AlertFilter(status, open ?? false, severity, assetId, from?.ToUniversalTime(), to?.ToUniversalTime()), 1, MaxExportRows, ct);
+                var bytes = Xlsx.Build("Alarmlar",
+                    ["Id", "Varlık", "Sensör", "Önem", "Durum", "Açılış (UTC)", "Tetikleyen değer", "Birim", "Eşik", "Üstlenen", "Kapanış (UTC)"],
+                    page.Items.Select(a => (IReadOnlyList<object?>)
+                        [a.Id, a.AssetName, a.SensorCode, a.Severity.ToString(), a.Status.ToString(), a.OpenedAt, a.OpenValue, a.Unit, a.Threshold, a.AcknowledgedBy, a.ClearedAt]));
+                return Results.File(bytes, Xlsx.ContentType, "alarmlar.xlsx");
+            })
+            .WithSummary($"Alarmları Excel (.xlsx) olarak indirir (en fazla {MaxExportRows} satır; metin hücreleri formül olarak çalışmaz).");
 
         app.MapGet("/api/dashboard", async (AssetStore assets, AlertStore alerts, IOptions<PulseOptions> options, TimeProvider clock, CancellationToken ct) =>
             {

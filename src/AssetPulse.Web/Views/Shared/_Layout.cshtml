@@ -35,6 +35,7 @@
                 <div class="d-flex align-items-center gap-2">
                     @if (User.IsInRole("Admin"))
                     {
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Audit" asp-action="Index">Denetim kaydı</a>
                         <a class="btn btn-sm btn-outline-primary" asp-controller="Assets" asp-action="Create">Yeni varlık</a>
                     }
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="theme-toggle" title="Açık/koyu tema" aria-label="Temayı değiştir">◐</button>

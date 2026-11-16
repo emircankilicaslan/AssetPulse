@@ -7,7 +7,10 @@
 }
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
     <h1 class="h3 mb-0">Alarmlar</h1>
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-route-status="@Model.Status" asp-route-severity="@Model.Severity">CSV indir</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" asp-action="ExportXlsx" asp-route-status="@Model.Status" asp-route-severity="@Model.Severity">Excel indir</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-route-status="@Model.Status" asp-route-severity="@Model.Severity">CSV indir</a>
+    </div>
 </div>
 
 <form class="card ap-card mb-3" method="get" asp-action="Index">

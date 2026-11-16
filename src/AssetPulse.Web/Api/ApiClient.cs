@@ -58,6 +58,31 @@ public class ApiClient(HttpClient http, IHttpContextAccessor accessor)
         return (await res.Content.ReadAsByteArrayAsync(ct), "alarmlar.csv");
     }
 
+    public virtual async Task<byte[]> ExportAlertsXlsxAsync(AlertFilter filter, CancellationToken ct)
+    {
+        using var res = await SendAsync(HttpMethod.Get, $"api/alerts/export.xlsx?{Query(filter)}", null, ct);
+        await EnsureAsync(res, ct);
+        return await res.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public virtual Task<AuditPage> AuditAsync(string? actor, string? action, int page, int pageSize, CancellationToken ct) =>
+        GetAsync<AuditPage>($"api/audit?{AuditQuery(actor, action)}&page={page}&pageSize={pageSize}", ct);
+
+    public virtual async Task<byte[]> ExportAuditXlsxAsync(string? actor, string? action, CancellationToken ct)
+    {
+        using var res = await SendAsync(HttpMethod.Get, $"api/audit/export.xlsx?{AuditQuery(actor, action)}", null, ct);
+        await EnsureAsync(res, ct);
+        return await res.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    private static string AuditQuery(string? actor, string? action)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrEmpty(actor)) parts.Add($"actor={Uri.EscapeDataString(actor)}");
+        if (!string.IsNullOrEmpty(action)) parts.Add($"action={Uri.EscapeDataString(action)}");
+        return string.Join('&', parts);
+    }
+
     public virtual async Task AcknowledgeAsync(long alertId, string? note, CancellationToken ct)
     {
         using var res = await SendAsync(HttpMethod.Post, $"api/alerts/{alertId}/ack", JsonContent.Create(new { note }, options: Json), ct);

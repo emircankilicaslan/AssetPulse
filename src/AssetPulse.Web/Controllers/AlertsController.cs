@@ -42,6 +42,9 @@ public sealed class AlertsController(ApiClient api) : Controller
         return File(content, "text/csv; charset=utf-8", fileName);
     }
 
+    public async Task<IActionResult> ExportXlsx(string? status, string? severity, CancellationToken ct) =>
+        File(await api.ExportAlertsXlsxAsync(ToFilter(status, severity), ct), AuditController.XlsxType, "alarmlar.xlsx");
+
     private static AlertFilter ToFilter(string? status, string? severity)
     {
         var open = status == "open";
