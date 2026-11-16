@@ -61,6 +61,18 @@ public static class Display
         "Critical" => "text-bg-danger", "Warning" => "text-bg-warning", _ => "text-bg-info",
     };
 
+    public static readonly IReadOnlyList<(string Value, string Label)> AuditActions =
+    [
+        ("Login", "Giriş"), ("LoginFailed", "Başarısız giriş"),
+        ("AssetCreated", "Varlık oluşturuldu"), ("AssetKeyRotated", "Cihaz anahtarı yenilendi"),
+        ("AssetDeactivated", "Varlık pasife alındı"), ("AssetActivated", "Varlık etkinleştirildi"),
+        ("SensorCreated", "Sensör eklendi"), ("RuleCreated", "Alarm kuralı eklendi"),
+        ("AlertAcknowledged", "Alarm üstlenildi"),
+    ];
+
+    public static string AuditActionLabel(string action) =>
+        AuditActions.FirstOrDefault(a => a.Value == action).Label ?? action;
+
     public static string StatusLabel(string status) => status switch
     {
         "Active" => "Aktif", "Acknowledged" => "Üstlenildi", "Cleared" => "Kapandı", _ => status,

@@ -35,6 +35,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<Db>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<AssetStore>();
+builder.Services.AddScoped<AuditStore>();
+builder.Services.AddScoped<AuditLog>();
 builder.Services.AddScoped<AlertStore>();
 builder.Services.AddScoped<SeriesStore>();
 builder.Services.AddScoped<UserStore>();
@@ -137,6 +139,7 @@ AuthEndpoints.Map(app);
 AssetEndpoints.Map(app);
 ReadingEndpoints.Map(app);
 AlertEndpoints.Map(app);
+AuditEndpoints.Map(app);
 
 app.Run();
 

@@ -1,0 +1,80 @@
+@using AssetPulse.Web.Helpers
+@model AuditIndexModel
+@{
+    ViewData["Title"] = "Denetim kaydı";
+    var data = Model.Page;
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <h1 class="h3 mb-0">Denetim kaydı</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Export" asp-route-actor="@Model.Actor" asp-route-islem="@Model.Action">Excel indir</a>
+</div>
+
+<form class="card ap-card mb-3" method="get" asp-action="Index">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-sm-5 col-md-4">
+            <label class="form-label small mb-1" for="f-actor">Kullanıcı</label>
+            <input class="form-control form-control-sm" id="f-actor" name="actor" value="@Model.Actor" maxlength="60" autocomplete="off" />
+        </div>
+        <div class="col-sm-5 col-md-4">
+            <label class="form-label small mb-1" for="f-islem">İşlem</label>
+            <select class="form-select form-select-sm" id="f-islem" name="islem">
+                <option value="">Tümü</option>
+                @foreach (var (value, label) in Display.AuditActions)
+                {
+                    <option value="@value" selected="@(Model.Action == value)">@label</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto"><button class="btn btn-primary btn-sm" type="submit">Süz</button></div>
+        <div class="col text-end small text-body-secondary">@data.Total kayıt</div>
+    </div>
+</form>
+
+<div class="card ap-card">
+    @if (data.Items.Count == 0)
+    {
+        <div class="card-body text-body-secondary">Bu süzgece uyan kayıt yok.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle ap-table mb-0">
+                <thead>
+                    <tr><th>Zaman</th><th>Kullanıcı</th><th>İşlem</th><th>Kayıt</th><th>Ayrıntı</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var e in data.Items)
+                {
+                    <tr>
+                        <td data-label="Zaman" class="text-nowrap">@Display.Local(e.OccurredAt, "dd.MM.yyyy HH:mm:ss")</td>
+                        <td data-label="Kullanıcı">@e.Actor @if (e.ActorRole is not null) { <span class="badge text-bg-secondary">@(e.ActorRole == "Admin" ? "Admin" : "Operatör")</span> }</td>
+                        <td data-label="İşlem">@Display.AuditActionLabel(e.Action)</td>
+                        <td data-label="Kayıt" class="text-nowrap">@(e.EntityType is null ? "–" : $"{e.EntityType} {e.EntityId}")</td>
+                        <td data-label="Ayrıntı" class="small text-body-secondary">@(e.Details ?? "–")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (data.TotalPages > 1)
+{
+    <nav class="mt-3" aria-label="Sayfalar">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+            <li class="page-item @(data.Page <= 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-actor="@Model.Actor" asp-route-islem="@Model.Action" asp-route-page="@(data.Page - 1)">‹ Önceki</a>
+            </li>
+            @for (var p = Math.Max(1, data.Page - 2); p <= Math.Min(data.TotalPages, data.Page + 2); p++)
+            {
+                <li class="page-item @(p == data.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-actor="@Model.Actor" asp-route-islem="@Model.Action" asp-route-page="@p">@p</a>
+                </li>
+            }
+            <li class="page-item @(data.Page >= data.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-actor="@Model.Actor" asp-route-islem="@Model.Action" asp-route-page="@(data.Page + 1)">Sonraki ›</a>
+            </li>
+        </ul>
+    </nav>
+}

@@ -1,6 +1,7 @@
 using AssetPulse.Api.Data;
 using AssetPulse.Api.Domain;
 using AssetPulse.Api.Security;
+using AssetPulse.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
@@ -39,7 +40,7 @@ public static class AssetEndpoints
     {
         var group = app.MapGroup("/api/assets").WithTags("Varlıklar");
 
-        group.MapPost("/", async (CreateAssetRequest req, AssetStore assets, CancellationToken ct) =>
+        group.MapPost("/", async (CreateAssetRequest req, HttpContext http, AssetStore assets, AuditLog audit, CancellationToken ct) =>
             {
                 if (req.Code is null || !Helpers.CodePattern().IsMatch(req.Code))
                     return Helpers.Invalid("code", "Kod 2-40 karakter olmalı; harf, rakam, '.', '_' ve '-' içerebilir.");
@@ -54,6 +55,7 @@ public static class AssetEndpoints
                 try
                 {
                     var id = await assets.CreateAsync(req.Code, req.Name.Trim(), req.Category, req.Location?.Trim(), hash, ct);
+                    await audit.RecordAsync(http, "AssetCreated", "Asset", id, $"{req.Code} · {req.Name.Trim()} · {req.Category}");
                     return Results.Created($"/api/assets/{id}", new
                     {
                         id, code = req.Code, name = req.Name.Trim(), category = req.Category, location = req.Location?.Trim(),
@@ -96,27 +98,35 @@ public static class AssetEndpoints
             .RequireAuthorization()
             .WithSummary("Varlığı, sensörlerini, son değerlerini ve alarm kurallarını getirir.");
 
-        group.MapPost("/{id:int}/rotate-key", async (int id, AssetStore assets, CancellationToken ct) =>
+        group.MapPost("/{id:int}/rotate-key", async (int id, HttpContext http, AssetStore assets, AuditLog audit, CancellationToken ct) =>
             {
                 var (key, hash) = ApiKeys.Generate();
-                return await assets.RotateKeyAsync(id, hash, ct)
-                    ? Results.Ok(new { apiKey = key, apiKeyNote = "Eski anahtar geçersiz oldu." })
-                    : Helpers.NotFound("Varlık bulunamadı.");
+                if (!await assets.RotateKeyAsync(id, hash, ct)) return Helpers.NotFound("Varlık bulunamadı.");
+                await audit.RecordAsync(http, "AssetKeyRotated", "Asset", id); // anahtarın kendisi kayda girmez
+                return Results.Ok(new { apiKey = key, apiKeyNote = "Eski anahtar geçersiz oldu." });
             })
             .RequireAuthorization("AdminOnly")
             .WithSummary("Cihaz anahtarını yeniler; eskisi hemen geçersiz olur (yalnızca Admin).");
 
-        group.MapPost("/{id:int}/deactivate", async (int id, AssetStore assets, CancellationToken ct) =>
-            await assets.SetActiveAsync(id, false, ct) ? Results.NoContent() : Helpers.NotFound("Varlık bulunamadı."))
+        group.MapPost("/{id:int}/deactivate", async (int id, HttpContext http, AssetStore assets, AuditLog audit, CancellationToken ct) =>
+            {
+                if (!await assets.SetActiveAsync(id, false, ct)) return Helpers.NotFound("Varlık bulunamadı.");
+                await audit.RecordAsync(http, "AssetDeactivated", "Asset", id);
+                return Results.NoContent();
+            })
             .RequireAuthorization("AdminOnly")
             .WithSummary("Varlığı pasife alır: cihaz anahtarı geçersiz olur, filo listesinden çıkar; geçmiş veri korunur (yalnızca Admin).");
 
-        group.MapPost("/{id:int}/activate", async (int id, AssetStore assets, CancellationToken ct) =>
-            await assets.SetActiveAsync(id, true, ct) ? Results.NoContent() : Helpers.NotFound("Varlık bulunamadı."))
+        group.MapPost("/{id:int}/activate", async (int id, HttpContext http, AssetStore assets, AuditLog audit, CancellationToken ct) =>
+            {
+                if (!await assets.SetActiveAsync(id, true, ct)) return Helpers.NotFound("Varlık bulunamadı.");
+                await audit.RecordAsync(http, "AssetActivated", "Asset", id);
+                return Results.NoContent();
+            })
             .RequireAuthorization("AdminOnly")
             .WithSummary("Pasife alınmış varlığı yeniden etkinleştirir (yalnızca Admin).");
 
-        group.MapPost("/{id:int}/sensors", async (int id, CreateSensorRequest req, AssetStore assets, CancellationToken ct) =>
+        group.MapPost("/{id:int}/sensors", async (int id, CreateSensorRequest req, HttpContext http, AssetStore assets, AuditLog audit, CancellationToken ct) =>
             {
                 if (req.Code is null || !Helpers.CodePattern().IsMatch(req.Code))
                     return Helpers.Invalid("code", "Kod 2-40 karakter olmalı; harf, rakam, '.', '_' ve '-' içerebilir.");
@@ -128,6 +138,7 @@ public static class AssetEndpoints
                 try
                 {
                     var sensorId = await assets.AddSensorAsync(id, req.Code, req.Name.Trim(), req.Unit.Trim(), ct);
+                    await audit.RecordAsync(http, "SensorCreated", "Sensor", sensorId, $"varlık {id} · {req.Code} ({req.Unit.Trim()})");
                     return Results.Created($"/api/assets/{id}", new { id = sensorId, code = req.Code, name = req.Name.Trim(), unit = req.Unit.Trim() });
                 }
                 catch (SqlException ex) when (AssetStore.IsDuplicate(ex))
@@ -138,7 +149,7 @@ public static class AssetEndpoints
             .RequireAuthorization("AdminOnly")
             .WithSummary("Varlığa sensör ekler (yalnızca Admin).");
 
-        app.MapPost("/api/sensors/{sensorId:int}/rules", async (int sensorId, CreateRuleRequest req, AssetStore assets, CancellationToken ct) =>
+        app.MapPost("/api/sensors/{sensorId:int}/rules", async (int sensorId, CreateRuleRequest req, HttpContext http, AssetStore assets, AuditLog audit, CancellationToken ct) =>
             {
                 if (!Enum.IsDefined(req.Kind)) return Helpers.Invalid("kind", "Geçersiz kural türü.");
                 if (!Enum.IsDefined(req.Severity)) return Helpers.Invalid("severity", "Geçersiz önem derecesi.");
@@ -150,6 +161,8 @@ public static class AssetEndpoints
                 if (await assets.SensorAssetIdAsync(sensorId, ct) is null) return Helpers.NotFound("Sensör bulunamadı.");
 
                 var id = await assets.AddRuleAsync(sensorId, req.Kind, req.Threshold, hysteresis, consecutive, req.Severity, ct);
+                await audit.RecordAsync(http, "RuleCreated", "Rule", id,
+                    $"sensör {sensorId} · {req.Kind} {req.Threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)} · {req.Severity}");
                 return Results.Created($"/api/sensors/{sensorId}/rules/{id}", new
                 {
                     id, sensorId, req.Kind, req.Threshold, hysteresis, consecutiveCount = consecutive, req.Severity,
